@@ -1,0 +1,11 @@
+name: Bug Report
+description: Create a report to help us improve
+labels: ["bug"]
+body:
+  - type: textarea
+    id: reproducibility
+    attributes:
+      label: Reproducibility
+      description: Steps to reproduce the bug
+    validations:
+      required: true
