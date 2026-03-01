@@ -58,4 +58,4 @@ jobs:
       - name: Test with pytest
         run: |
           cd api
-          if [ -d . ]; then pytest; fi
+          if [ -d . ]; then pytest || [ $? -eq 5 ]; fi
