@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  go-ci:
+    name: Go Crawler CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: crawler/go.sum
+
+      - name: Install dependencies
+        run: |
+          cd crawler
+          if [ -f go.mod ]; then go mod download; fi
+
+      - name: Lint Go
+        run: |
+          # We will add golangci-lint later, for now just go vet
+          cd crawler
+          if [ -d . ]; then go vet ./...; fi
+
+      - name: Test Go
+        run: |
+          cd crawler
+          if [ -d . ]; then go test -v -race -cover ./...; fi
+
+  python-ci:
+    name: FastAPI API CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: api/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          cd api
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install ruff pytest
+
+      - name: Lint with Ruff
+        run: |
+          cd api
+          if [ -d . ]; then ruff check .; fi
+
+      - name: Test with pytest
+        run: |
+          cd api
+          if [ -d . ]; then pytest; fi

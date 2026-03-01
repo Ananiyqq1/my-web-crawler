@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: Web Crawler Management API
+  description: API for managing distributed web crawl jobs.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /crawl:
+    post:
+      summary: Start a new crawl job
+      operationId: startCrawl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrawlJobCreate'
+      responses:
+        '202':
+          description: Crawl job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlJobResponse'
+        '422':
+          description: Validation Error
+
+  /crawl/{job_id}:
+    get:
+      summary: Get crawl job status
+      operationId: getCrawlStatus
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlJobResponse'
+        '404':
+          description: Job not found
+    delete:
+      summary: Stop/Cancel a crawl job
+      operationId: stopCrawl
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Job cancelled
+        '404':
+          description: Job not found
+
+  /crawl/{job_id}/pages:
+    get:
+      summary: List crawled pages for a job
+      operationId: listCrawlPages
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PageResponse'
+
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+components:
+  schemas:
+    CrawlJobCreate:
+      type: object
+      required:
+        - seed_urls
+      properties:
+        seed_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+        max_depth:
+          type: integer
+          default: 3
+          minimum: 0
+          maximum: 10
+
+    CrawlJobResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        page_count:
+          type: integer
+
+    PageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+        http_status:
+          type: integer
+        fetched_at:
+          type: string
+          format: date-time
